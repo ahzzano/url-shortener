@@ -1,0 +1,12 @@
+services:
+    api:
+        build: .
+        ports:
+            - "${APP_PORT}:5000"
+        environment:
+            - REDIS_HOST=${REDIS_HOST}
+            - REDIS_PORT=${REDIS_PORT}
+    redis:
+        image: redis:alpine
+    postgresql:
+        image:

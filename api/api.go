@@ -8,16 +8,15 @@ import (
 )
 
 type App struct {
-    services []services.Service
+    services []services.Handler
 }
 
 func New() App {
     return App {
-        services: []services.Service{
+        services: []services.Handler{
             rerouter.New(),
             shortener.New(),
         },
-
     }
 }
 

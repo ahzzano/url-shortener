@@ -1,5 +1,5 @@
 package services;
 
-type Service interface {
+type Handler interface {
     Mount() error
 }
