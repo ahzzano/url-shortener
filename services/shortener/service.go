@@ -2,8 +2,7 @@ package shortener
 
 import (
 	"context"
-	"encoding/base64"
-	"math/big"
+	"strconv"
 	queries "url-shortener/database/postgres"
 )
 
@@ -17,12 +16,7 @@ func (s *ShortenerService) shortenURL(ctx context.Context, url string) (string, 
 		return "", err
 	}
 
-	bigVal := big.NewInt(id)
-	bytes := bigVal.Bytes()
+	shortened := strconv.FormatInt(id, 36)
 
-	if len(bytes) == 0 {
-		bytes = []byte{0}
-	}
-
-	return base64.StdEncoding.EncodeToString(bytes), nil
+	return shortened, nil
 }
