@@ -6,11 +6,11 @@ type Rerouter struct {
 }
 
 func New() *Rerouter {
-    return &Rerouter{}
+	return &Rerouter{}
 }
 
-func (s *Rerouter) Mount() error {
-	http.HandleFunc("GET /{id}", s.redirect)
+func (s *Rerouter) Mount(mux *http.ServeMux) error {
+	mux.HandleFunc("GET /{id}", s.redirect)
 	return nil
 }
 
