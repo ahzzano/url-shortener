@@ -2,11 +2,43 @@ services:
     api:
         build: .
         ports:
-            - "${APP_PORT}:5000"
+            - "${APP_PORT}:8080"
         environment:
             - REDIS_HOST=${REDIS_HOST}
             - REDIS_PORT=${REDIS_PORT}
+            # Development-only credentials and TLS settings.
+            - DATABASE_URL=postgres://${POSTGRES_USER:-url_shortener}:${POSTGRES_PASSWORD:-local_dev_password}@postgresql:5432/${POSTGRES_DB:-url_shortener}?sslmode=disable
+        depends_on:
+            postgresql:
+                condition: service_healthy
+        develop:
+            watch:
+                - action: rebuild
+                  path: ./
+                  ignore:
+                      - .gitignore
     redis:
-        image: redis:alpine
+        image: redis:8.10.2-alpine
+        ports:
+            - "6379:6379"
+        volumes:
+            - redis_data:/data
     postgresql:
-        image:
+        image: postgres:17-alpine
+        ports:
+            - "127.0.0.1:5432:5432"
+        environment:
+            POSTGRES_USER: ${POSTGRES_USER:-url_shortener}
+            POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-local_dev_password}
+            POSTGRES_DB: ${POSTGRES_DB:-url_shortener}
+        healthcheck:
+            test:
+                - CMD-SHELL
+                - pg_isready -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"
+            interval: 2s
+            timeout: 5s
+            retries: 15
+
+volumes:
+    redis_data:
+        driver: local
