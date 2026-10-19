@@ -27,7 +27,9 @@ func getDatabaseAndApi(t *testing.T) (*sql.DB, *httptest.Server) {
 		t.Fatalf("Unable to setup database: %v", err.Error())
 	}
 
-	httpServer := httptest.NewServer(api.New(db))
+	httpServer := httptest.NewServer(api.New(&api.APIConfig{
+		Database: db,
+	}))
 
 	return db, httpServer
 

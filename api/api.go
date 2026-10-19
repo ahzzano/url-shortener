@@ -7,17 +7,24 @@ import (
 	"url-shortener/middleware"
 	"url-shortener/services/rerouter"
 	"url-shortener/services/shortener"
+
+	"github.com/redis/go-redis/v9"
 )
 
-func New(db *sql.DB) http.Handler {
+type APIConfig struct {
+	Database *sql.DB
+	RedisDb  *redis.Client
+}
+
+func New(config *APIConfig) http.Handler {
 	mux := http.NewServeMux()
 
 	rerouter.New(&rerouter.RerouterHandlerParams{
-		DBTX: db,
+		DBTX: config.Database,
 	}).Mount(mux)
 
 	shortener.New(&shortener.ShortenerHandlerParams{
-		DBTX: db,
+		DBTX: config.Database,
 	}).Mount(mux)
 
 	handler := middleware.LoggingMiddleware(mux)

@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"log/slog"
+	"net"
 	"net/http"
 	"os"
 	"strings"
@@ -12,6 +13,7 @@ import (
 	"url-shortener/api"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
+	"github.com/redis/go-redis/v9"
 )
 
 func main() {
@@ -29,9 +31,20 @@ func run() error {
 	}
 	defer db.Close()
 
-	handler := api.New(db)
+	rdb := setupRedis()
+
+	handler := api.New(&api.APIConfig{
+		Database: db,
+		RedisDb:  rdb,
+	})
 	slog.Info("Running the API")
 	return http.ListenAndServe(":8080", handler)
+}
+
+func setupRedis() *redis.Client {
+	return redis.NewClient(&redis.Options{
+		Addr: net.JoinHostPort(os.Getenv("REDIS_HOST"), os.Getenv("REDIS_PORT")),
+	})
 }
 
 func setupDatabase() (*sql.DB, error) {
