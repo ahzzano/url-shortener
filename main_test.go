@@ -27,8 +27,11 @@ func getDatabaseAndApi(t *testing.T) (*sql.DB, *httptest.Server) {
 		t.Fatalf("Unable to setup database: %v", err.Error())
 	}
 
+	redis := setupRedis()
+
 	httpServer := httptest.NewServer(api.New(&api.APIConfig{
 		Database: db,
+		RedisDb:  redis,
 	}))
 
 	return db, httpServer

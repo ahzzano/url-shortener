@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"log/slog"
 	"net/http"
+	"url-shortener/database/cache"
 	"url-shortener/middleware"
 	"url-shortener/services/rerouter"
 	"url-shortener/services/shortener"
@@ -20,7 +21,8 @@ func New(config *APIConfig) http.Handler {
 	mux := http.NewServeMux()
 
 	rerouter.New(&rerouter.RerouterHandlerParams{
-		DBTX: config.Database,
+		DBTX:  config.Database,
+		Cache: cache.New(config.RedisDb),
 	}).Mount(mux)
 
 	shortener.New(&shortener.ShortenerHandlerParams{

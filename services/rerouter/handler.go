@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"net/http"
 	"strconv"
+	"url-shortener/database/cache"
 	queries "url-shortener/database/postgres"
 )
 
@@ -14,13 +15,15 @@ type Rerouter struct {
 }
 
 type RerouterHandlerParams struct {
-	DBTX queries.DBTX
+	DBTX  queries.DBTX
+	Cache cache.RedisCache
 }
 
 func New(params *RerouterHandlerParams) *Rerouter {
 	return &Rerouter{
 		RerouterService{
 			database: *queries.New(params.DBTX),
+			cache:    params.Cache,
 		},
 	}
 }
