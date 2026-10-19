@@ -1,6 +1,7 @@
 package shortener
 
 import (
+	"errors"
 	"log/slog"
 	"net/http"
 	queries "url-shortener/database/postgres"
@@ -51,12 +52,16 @@ func (s *ShortenerHandler) shortenUrl(w http.ResponseWriter, r *http.Request) {
 
 	shortened, err := s.service.shortenURL(r.Context(), url)
 	if err != nil {
+		if errors.Is(err, ErrInvalidURL) {
+			http.Error(w, ErrInvalidURL.Error(), http.StatusBadRequest)
+			return
+		}
 		http.Error(w, "Error", http.StatusInternalServerError)
 		slog.Error("Error shortening url", "error", err.Error())
 		return
 	}
 
-	services.ToJSONResponse(w, ShortenURLResponse{
+	services.ToJSONResponse(w, http.StatusCreated, ShortenURLResponse{
 		URL: shortened,
 	})
 }

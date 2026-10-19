@@ -2,7 +2,6 @@ package services
 
 import (
 	"encoding/json"
-	"io"
 	"net/http"
 )
 
@@ -10,7 +9,9 @@ type Handler interface {
 	Mount(*http.ServeMux) error
 }
 
-func ToJSONResponse(w io.Writer, value any) {
+func ToJSONResponse(w http.ResponseWriter, status int, value any) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
 	encoder := json.NewEncoder(w)
 	encoder.Encode(value)
 }

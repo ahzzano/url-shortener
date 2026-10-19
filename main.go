@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"log/slog"
+	"net/http"
 	"os"
 	"strings"
 	"time"
@@ -22,26 +23,35 @@ func main() {
 }
 
 func run() error {
+	db, err := setupDatabase()
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+
+	handler := api.New(db)
+	slog.Info("Running the API")
+	return http.ListenAndServe(":8080", handler)
+}
+
+func setupDatabase() (*sql.DB, error) {
 	databaseURL := strings.TrimSpace(os.Getenv("DATABASE_URL"))
 	if databaseURL == "" {
-		return errors.New("DATABASE_URL is required")
+		return nil, errors.New("DATABASE_URL is required")
 	}
 	db, err := sql.Open("pgx", databaseURL)
 	if err != nil {
-		return errors.New("invalid DATABASE_URL")
+		return nil, errors.New("invalid DATABASE_URL")
 	}
-	defer db.Close()
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	err = db.PingContext(ctx)
 	cancel()
 	if err != nil {
+		db.Close()
 		// Driver errors may contain credentials from the connection string.
-		return errors.New("cannot connect to PostgreSQL; check DATABASE_URL and database availability")
+		return nil, errors.New("cannot connect to PostgreSQL; check DATABASE_URL and database availability")
 	}
 
-	app := api.New(db)
-	app.Mount()
-	app.Run()
-	return nil
+	return db, nil
 }
