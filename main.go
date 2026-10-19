@@ -62,6 +62,10 @@ func setupDatabase() (*sql.DB, error) {
 		return nil, errors.New("invalid DATABASE_URL")
 	}
 
+	db.SetMaxOpenConns(20)
+	db.SetMaxIdleConns(10)
+	db.SetConnMaxIdleTime(time.Minute)
+
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	err = db.PingContext(ctx)
 	cancel()
