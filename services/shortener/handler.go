@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"net/http"
 	queries "url-shortener/database/postgres"
+	"url-shortener/middleware"
 	"url-shortener/services"
 )
 
@@ -26,8 +27,12 @@ func New(params *ShortenerHandlerParams) *ShortenerHandler {
 	}
 }
 
-func (s *ShortenerHandler) Mount(mux *http.ServeMux) error {
-	mux.HandleFunc("POST /shorten", s.shortenUrl)
+func (s *ShortenerHandler) Mount(mux *http.ServeMux, wrap middleware.Middleware) error {
+	var handler http.Handler = http.HandlerFunc(s.shortenUrl)
+	if wrap != nil {
+		handler = wrap(handler)
+	}
+	mux.Handle("POST /shorten", handler)
 	return nil
 }
 

@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 	"url-shortener/api"
+	"url-shortener/middleware/ratelimiter"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/redis/go-redis/v9"
@@ -32,10 +33,13 @@ func run() error {
 	defer db.Close()
 
 	rdb := setupRedis()
+	defer rdb.Close()
+	limiter := ratelimiter.RateLimiter{Algorithm: ratelimiter.FixedWindow(10, time.Minute)}
 
 	handler := api.New(&api.APIConfig{
-		Database: db,
-		RedisDb:  rdb,
+		Database:          db,
+		RedisDb:           rdb,
+		ShortenMiddleware: limiter.New(rdb),
 	})
 	slog.Info("Running the API")
 	return http.ListenAndServe(":8080", handler)
@@ -43,7 +47,8 @@ func run() error {
 
 func setupRedis() *redis.Client {
 	return redis.NewClient(&redis.Options{
-		Addr: net.JoinHostPort(os.Getenv("REDIS_HOST"), os.Getenv("REDIS_PORT")),
+		Addr:                  net.JoinHostPort(os.Getenv("REDIS_HOST"), os.Getenv("REDIS_PORT")),
+		ContextTimeoutEnabled: true,
 	})
 }
 

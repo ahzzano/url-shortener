@@ -13,8 +13,9 @@ import (
 )
 
 type APIConfig struct {
-	Database *sql.DB
-	RedisDb  *redis.Client
+	Database          *sql.DB
+	RedisDb           *redis.Client
+	ShortenMiddleware middleware.Middleware
 }
 
 func New(config *APIConfig) http.Handler {
@@ -27,7 +28,7 @@ func New(config *APIConfig) http.Handler {
 
 	shortener.New(&shortener.ShortenerHandlerParams{
 		DBTX: config.Database,
-	}).Mount(mux)
+	}).Mount(mux, config.ShortenMiddleware)
 
 	handler := middleware.LoggingMiddleware(mux)
 	slog.Info("Mounted the API")
